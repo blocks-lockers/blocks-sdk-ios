@@ -69,23 +69,19 @@ final class API {
 		}).resume()
 	}
 
-//	static func makeRequest(request: DataRequest, completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
-//		request.validate(jwtExpirationValidator)
-//		request.response { response in
-//			if response.isSuccessful {
-//				completion?(.success(()))
-//			} else if let data = response.data, let json = API.decode(ErrorResponse.self, from: data, logError: false), let error = json.errorCode {
-//				completion?(.failure(error))
-//			} else {
-//				Crashlytics.reportServerError(response: response)
-//				if response.error != nil {
-//					completion?(.failure(APIError.networkError))
-//				} else {
-//					completion?(.failure(APIError.serverError))
-//				}
-//			}
-//		}
-//	}
+	static func makeRequest(request: URLRequest, completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
+		session.dataTask(with: request, completionHandler: { data, response, error in
+			if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
+				DispatchQueue.main.async {
+					completion?(.success(()))
+				}
+			} else {
+				DispatchQueue.main.async {
+					completion?(.failure(BlocksApiError.serverError))
+				}
+			}
+		}).resume()
+	}
 
 	static func process<T>(data: Data?, response: URLResponse?, error: Error?, decoder: JSONDecoder = jsonDecoder) throws -> T where T: Decodable {
 		if let data = data, let json = try? decoder.decode(T.self, from: data) {

@@ -12,17 +12,17 @@ public final class BlocksSDK: NSObject {
 
 	public static let shared = BlocksSDK()
 
-	public var rangingHandler: (([String]) -> Void)? {
-		get { return locationManager.rangingHandler }
-		set { locationManager.rangingHandler = newValue }
-	}
-
 	private let locationManager = LocationManager()
-	private var authResponse: BlocksAuthResponse?
+	internal var authResponse: BlocksAuthResponse?
+
+	public weak var delegate: BlocksSDKDelegate?
 
 	public var storageQrCode: String? {
 		return authResponse?.storageQrCode
 	}
+
+	/// Nearby Blocks serial numbers
+	public internal(set) var nearbyBlocks: [String] = []
 
 	private override init() {
 		super.init()
@@ -38,14 +38,15 @@ public final class BlocksSDK: NSObject {
 	}
 
 	public func listPackages(completion: @escaping (Swift.Result<[BlocksPackage], Error>) -> Void) {
-		guard let token = authResponse?.token else {
-			return completion(.failure(BlocksApiError.internalError))
-		}
-		API.Blocks.myPackages(token: token) { result in
+		API.Blocks.myPackages { result in
 			completion(Swift.Result {
 				return try result.get().packages
 			})
 		}
+	}
+
+	public func openBox(packageId: String, completion: @escaping (Swift.Result<Void, Error>) -> Void) {
+		API.Blocks.openBox(packageId: packageId, completion: completion)
 	}
 
 	public func startMonitoring() {
