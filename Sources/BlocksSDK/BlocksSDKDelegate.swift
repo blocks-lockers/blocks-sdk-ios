@@ -10,7 +10,6 @@ import Foundation
 
 public protocol BlocksSDKDelegate: class {
 
-	func blocksSdk(_ blocksSdk: BlocksSDK, didEnterBlocks serialNo: String)
-	func blocksSdk(_ blocksSdk: BlocksSDK, didExitBlocks serialNo: String)
+	func didUpdateNearbyBlocks()
 
 }
