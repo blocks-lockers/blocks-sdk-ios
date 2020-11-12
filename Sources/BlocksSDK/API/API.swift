@@ -57,7 +57,7 @@ final class API {
 	static func makeRequest<U>(request: URLRequest, completion: ((Swift.Result<U, Error>) -> Void)? = nil) where U: Decodable {
 		session.dataTask(with: request, completionHandler: { data, response, error in
 			do {
-				let responseObj = try API.process(data: data, response: response, error: error)
+				let responseObj: U = try API.process(data: data, response: response, error: error)
 				DispatchQueue.main.async {
 					completion?(.success(responseObj))
 				}
