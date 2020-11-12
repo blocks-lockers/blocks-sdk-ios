@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum BlocksApiError: Error {
+public enum BlocksApiError: Error {
 
 	case internalError
 	case serverError

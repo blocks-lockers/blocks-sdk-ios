@@ -10,10 +10,10 @@ import Foundation
 
 public final class Blocks: Codable {
 
-	let id: String
-	let name: String
-	let serialNo: String
-	let address: String
-	let location: BlocksLocalizedString
+	public let id: String
+	public let name: String
+	public let serialNo: String
+	public let address: String
+	public let location: BlocksLocalizedString
 
 }

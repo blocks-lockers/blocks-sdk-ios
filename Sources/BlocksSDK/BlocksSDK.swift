@@ -20,6 +20,10 @@ public final class BlocksSDK: NSObject {
 	private let locationManager = LocationManager()
 	private var authResponse: BlocksAuthResponse?
 
+	public var storageQrCode: String? {
+		return authResponse?.storageQrCode
+	}
+
 	private override init() {
 		super.init()
 	}

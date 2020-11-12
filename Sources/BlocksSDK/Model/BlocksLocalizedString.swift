@@ -10,14 +10,14 @@ import Foundation
 
 public final class BlocksLocalizedString: Codable {
 
-	let en: String?
-	let cs: String?
+	public let en: String?
+	public let cs: String?
 
 }
 
 public extension BlocksLocalizedString {
 
-	var value: String {
+	public var value: String {
 		return en ?? cs ?? ""
 //		if Localization.currentLanguage == "cs" {
 //			return cs ?? en ?? ""

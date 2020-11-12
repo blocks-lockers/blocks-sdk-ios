@@ -10,13 +10,13 @@ import Foundation
 
 public final class BlocksPackage: Codable {
 	
-	let id: String
-	let blocks: Blocks
-	let createdAt: Date
-	let selfStored: Bool
-	let isUsed: Bool
-	let unlockCode: String
-	let qrCode: String
+	public let id: String
+	public let blocks: Blocks
+	public let createdAt: Date
+	public let selfStored: Bool
+	public let isUsed: Bool
+	public let unlockCode: String
+	public let qrCode: String
 
 }
 
