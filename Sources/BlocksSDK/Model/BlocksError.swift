@@ -1,5 +1,5 @@
 //
-//  BlocksSDKDelegate.swift
+//  BlocksError.swift
 //  BlocksSDK
 //
 //  Created by Alex Studnicka on 12.11.2020.
@@ -8,8 +8,12 @@
 
 import Foundation
 
-public protocol BlocksSDKDelegate: class {
+public enum BlocksError: Error {
 
-	func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String])
+	case internalError
+	case serverError
+	case networkError
+
+	case blocksNotNearby
 
 }

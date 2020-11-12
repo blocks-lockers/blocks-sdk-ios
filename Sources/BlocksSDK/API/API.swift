@@ -41,9 +41,13 @@ final class API {
 
 	static func createRequest(_ url: String) throws -> URLRequest {
 		guard let url = URL(string: baseUrl + url) else {
-			throw BlocksApiError.internalError
+			throw BlocksError.internalError
 		}
-		return URLRequest(url: url)
+		var urlRequest = URLRequest(url: url)
+		if let token = BlocksSDK.shared.authResponse?.token {
+			urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+		}
+		return urlRequest
 	}
 
 	static func createRequest<T>(_ url: String, method: String = "POST", request: T) throws -> URLRequest where T: Encodable {
@@ -71,13 +75,13 @@ final class API {
 
 	static func makeRequest(request: URLRequest, completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
 		session.dataTask(with: request, completionHandler: { data, response, error in
-			if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
+			if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
 				DispatchQueue.main.async {
 					completion?(.success(()))
 				}
 			} else {
 				DispatchQueue.main.async {
-					completion?(.failure(BlocksApiError.serverError))
+					completion?(.failure(BlocksError.serverError))
 				}
 			}
 		}).resume()
@@ -97,9 +101,9 @@ final class API {
 	static func throwError(response: URLResponse?, error: Error?) throws -> Never {
 		print("ERROR:", response as Any, error as Any)
 		if error != nil {
-			throw BlocksApiError.networkError
+			throw BlocksError.networkError
 		} else {
-			throw BlocksApiError.serverError
+			throw BlocksError.serverError
 		}
 	}
 

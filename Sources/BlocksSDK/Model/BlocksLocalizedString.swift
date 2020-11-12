@@ -15,7 +15,7 @@ public final class BlocksLocalizedString: Codable {
 
 }
 
-public extension BlocksLocalizedString {
+extension BlocksLocalizedString {
 
 	public var value: String {
 		return en ?? cs ?? ""

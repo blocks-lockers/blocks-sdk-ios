@@ -19,7 +19,7 @@ internal final class LocationManager: NSObject {
 		let region = CLBeaconRegion(proximityUUID: proximityUUID, identifier: "io.spaceflow.blocks.beacon")
 		region.notifyOnEntry = true
 		region.notifyOnExit = true
-		region.notifyEntryStateOnDisplay = true
+//		region.notifyEntryStateOnDisplay = true
 		return region
 	}()
 
@@ -32,6 +32,10 @@ internal final class LocationManager: NSObject {
 		manager.startMonitoring(for: region)
 	}
 
+	func stopMonitoring() {
+		manager.stopMonitoring(for: region)
+	}
+
 	func requestState() {
 		manager.requestState(for: region)
 	}
@@ -41,10 +45,6 @@ internal final class LocationManager: NSObject {
 // MARK: - CLLocationManagerDelegate
 
 extension LocationManager: CLLocationManagerDelegate {
-
-//	func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-//		print("didChangeAuthorization:", status.rawValue)
-//	}
 
 	func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
 		switch state {
@@ -72,53 +72,8 @@ extension LocationManager: CLLocationManagerDelegate {
 	func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
 		let nearbyBeacons = beacons.filter({ $0.proximity == .immediate || $0.proximity == .near })
 		let nearbyBlocksIds = nearbyBeacons.map { String(format: "%04d-%04d", $0.major.intValue, $0.minor.intValue) }
-		BlocksSDK.shared.nearbyBlocks = nearbyBlocksIds
-		BlocksSDK.shared.delegate?.didUpdateNearbyBlocks()
-//		checkNearbyPackages(nearbyBlocksIds: nearbyBlocksIds)
-	}
-
-}
-
-// MARK: - Utilities
-
-extension LocationManager {
-
-	private func checkNearbyPackages(nearbyBlocksIds: [String]) {
-//		let interval: TimeInterval = 3600
-//		if let date = UserDefaults.standard.nearbyNotificationLastSentDate, date.timeIntervalSinceNow > -interval {
-//			return
-//		}
-//
-//		if UIApplication.shared.applicationState == .active {
-//			return
-//		}
-//
-//		UserDefaults.standard.nearbyNotificationLastSentDate = Date()
-//
-//		API.User.packages { result in
-//			do {
-//				let response = try result.get()
-//				UIApplication.shared.applicationIconBadgeNumber = response.packages.count
-//				let blocksPackages = response.packages.filter({ nearbyBlocksIds.contains($0.blocks.serialNo) })
-//				if let package = blocksPackages.first {
-//					let blocksName = package.blocks.name
-//					self.displayProximityNotification(blocksName: blocksName, packageId: package.id)
-//				}
-//			} catch {
-//
-//			}
-//		}
-	}
-
-	private func displayProximityNotification(blocksName: String, packageId: String) {
-//		let content = UNMutableNotificationContent()
-//		content.title = String(format: ~"notification-blocks-nearby-title", blocksName)
-//		content.body = ~"notification-blocks-nearby-body"
-//		content.userInfo = [
-//			"package_id": packageId
-//		]
-//		let request = UNNotificationRequest(identifier: Constants.nearbyNotificationIdentifier, content: content, trigger: nil)
-//		UNUserNotificationCenter.current().add(request)
+		BlocksSDK.shared.nearbyBlocksIds = nearbyBlocksIds
+		BlocksSDK.shared.delegate?.didUpdateNearbyBlocksIds(nearbyBlocksIds)
 	}
 
 }
