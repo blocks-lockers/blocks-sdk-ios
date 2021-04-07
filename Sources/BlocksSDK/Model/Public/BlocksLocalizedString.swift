@@ -1,5 +1,5 @@
 //
-//  BlocksSDKDelegate.swift
+//  BlocksLocalizedString.swift
 //  BlocksSDK
 //
 //  Created by Alex Studnicka on 12.11.2020.
@@ -8,8 +8,9 @@
 
 import Foundation
 
-public protocol BlocksSDKDelegate: class {
+public final class BlocksLocalizedString: Codable {
 
-	func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String])
+	public let en: String?
+	public let cs: String?
 
 }

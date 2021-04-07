@@ -3,7 +3,7 @@
 //  BlocksSDK
 //
 //  Created by Alex Studnicka on 12.11.2020.
-//  Copyright © 2020 Spaceflow s.r.o. All rights reserved.
+//  Copyright © 2021 Property Blocks s.r.o. All rights reserved.
 //
 
 import Foundation
@@ -26,6 +26,10 @@ public final class BlocksSDK: NSObject {
 
 	private override init() {
 		super.init()
+	}
+
+	public func setup() {
+		BluetoothManager.shared.setup()
 	}
 
 	public func authenticate(apiKey: String, userId: String, buildingId: String, completion: @escaping (Swift.Result<Void, Error>) -> Void) {
