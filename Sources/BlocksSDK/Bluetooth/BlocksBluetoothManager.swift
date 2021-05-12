@@ -134,12 +134,12 @@ extension BlocksBluetoothManager {
 					if self.previousPickupState != .waitingForClose {
 						self.pickupHandler?(.opened)
 					}
+					fallthrough
+
+				case .ready, .unknown:
 					DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 						self.checkPickUpState(peripheral: peripheral)
 					}
-
-				case .ready, .unknown:
-					throw BluetoothError.internalError
 				}
 
 				self.previousPickupState = state.state
