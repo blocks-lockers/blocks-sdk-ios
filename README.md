@@ -2,10 +2,6 @@
 
 By [Blocks Lockers](https://blockslockers.com/).
 
-## Introduction
-
-This SDK for iOS contains the most up-to-date frameworks for integrating Mobile Key technology into your own iOS applications. It will setup the necessary security to communicate with Connect API, and unlock locks with encrypted Mobile Keys returned by the Connect API. The SDK for iOS includes iOS libraries, developer documentation and a sample Xcode project to get you up and running quickly and easily.
-
 ## Requirements
 
 * iOS 11+
@@ -17,7 +13,8 @@ This SDK for iOS contains the most up-to-date frameworks for integrating Mobile 
 ### Swift Package Manager
 
 **Xcode**
-Select File > Swift Packages > Add Package Dependency...,
+
+Select File > Swift Packages > Add Package Dependency...
 
 https://github.com/blocks-lockers/blocks-sdk-ios
 
@@ -28,27 +25,24 @@ Setup
 import BlocksSDK
 
 func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-	// ...
-	
-	BlocksSDK.setup()
-
-	return true
+    // ...
+    BlocksSDK.setup()
+    return true
 }
 ```
 
 Package pick-up via Bluetooth
 ```swift
 BlocksBluetoothManager.pickupPackage(
-	packageId: packageId,
-	unlockCode: unlockCode,
-	blocksSerialNo: blocksSerialNo,
-	completion: @escaping (Result<Void, Error>) -> Void
+    packageId: "cb5d5c4f-20ed-477e-a3f9-e6e5e46c82ce",
+    unlockCode: "123456",
+    blocksSerialNo: "2000-0001"
 ) { result in
-	do {
-		try result.get()
-	} catch {
-		print("error:", error)
-	}
+    do {
+        try result.get()
+    } catch {
+        print("error:", error)
+    }
 }
 ```
 
@@ -56,19 +50,19 @@ Beacon Monitoring
 ```swift
 class BlocksManager {
 
-	func startMonitoring() {
-		// Request always location permissions from user
-		BlocksSDK.shared.delegate = self
-		BlocksSDK.shared.startMonitoring()
-	}
+    func startMonitoring() {
+        // Request always location permissions from user
+        BlocksSDK.shared.delegate = self
+        BlocksSDK.shared.startMonitoring()
+    }
 
 }
 
 extension BlocksManager: BlocksSDKDelegate {
 
-	func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String]) {
-		// ...
-	}
+    func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String]) {
+        // ...
+    }
 
 }
 ```

@@ -64,7 +64,6 @@ extension BlocksBluetoothManager {
 	private func readState(peripheral: Peripheral<Connectable>, completion: @escaping (Result<BlocksState, Error>) -> Void) {
 		peripheral.read(self.statusCharacteristic) { data, error in
 			if let data = data, let state = try? self.decoder.decode(BlocksState.self, from: data) {
-				dump(state)
 				completion(.success(state))
 			} else {
 				completion(.failure(error ?? BluetoothError.communicationError))
