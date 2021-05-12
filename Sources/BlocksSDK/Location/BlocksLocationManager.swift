@@ -1,5 +1,5 @@
 //
-//  LocationManager.swift
+//  BlocksLocationManager.swift
 //  BlocksSDK
 //
 //  Created by Alex Studnicka on 12.11.2020.
@@ -10,7 +10,7 @@ import UIKit
 import CoreLocation
 import UserNotifications
 
-final class LocationManager: NSObject {
+public final class BlocksLocationManager: NSObject {
 
 	private let manager = CLLocationManager()
 
@@ -19,9 +19,16 @@ final class LocationManager: NSObject {
 		let region = CLBeaconRegion(proximityUUID: proximityUUID, identifier: "io.spaceflow.blocks.beacon")
 		region.notifyOnEntry = true
 		region.notifyOnExit = true
-//		region.notifyEntryStateOnDisplay = true
+		region.notifyEntryStateOnDisplay = true
 		return region
 	}()
+
+	/// App will be launched and the delegate will be notified when the device's screen is turned on and the user is in the region.
+	public var notifyEntryStateOnDisplay = true {
+		didSet {
+			region.notifyEntryStateOnDisplay = notifyEntryStateOnDisplay
+		}
+	}
 
 	override init() {
 		super.init()
@@ -44,9 +51,9 @@ final class LocationManager: NSObject {
 
 // MARK: - CLLocationManagerDelegate
 
-extension LocationManager: CLLocationManagerDelegate {
+extension BlocksLocationManager: CLLocationManagerDelegate {
 
-	func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
+	public func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
 		switch state {
 		case .inside:
 			locationManager(manager, didEnterRegion: region)
@@ -57,19 +64,19 @@ extension LocationManager: CLLocationManagerDelegate {
 		}
 	}
 
-	func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+	public func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
 		if let beaconRegion = region as? CLBeaconRegion {
 			manager.startRangingBeacons(in: beaconRegion)
 		}
 	}
 
-	func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
+	public func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
 		if let beaconRegion = region as? CLBeaconRegion {
 			manager.stopRangingBeacons(in: beaconRegion)
 		}
 	}
 
-	func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
+	public func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
 		let nearbyBeacons = beacons.filter({ $0.proximity == .immediate || $0.proximity == .near })
 		let nearbyBlocksIds = nearbyBeacons.map { String(format: "%04d-%04d", $0.major.intValue, $0.minor.intValue) }
 		BlocksSDK.shared.nearbyBlocksIds = nearbyBlocksIds

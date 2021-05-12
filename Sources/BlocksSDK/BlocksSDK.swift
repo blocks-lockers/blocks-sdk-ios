@@ -12,7 +12,7 @@ public final class BlocksSDK: NSObject {
 
 	public static let shared = BlocksSDK()
 
-	private let locationManager = LocationManager()
+	private let locationManager = BlocksLocationManager()
 	internal var authResponse: BlocksAuthResponse?
 
 	public weak var delegate: BlocksSDKDelegate?
@@ -29,7 +29,7 @@ public final class BlocksSDK: NSObject {
 	}
 
 	public func setup() {
-		BluetoothManager.shared.setup()
+		BlocksBluetoothManager.shared.setup()
 	}
 
 	public func authenticate(apiKey: String, userId: String, buildingId: String, completion: @escaping (Swift.Result<Void, Error>) -> Void) {

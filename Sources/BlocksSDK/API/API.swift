@@ -33,13 +33,6 @@ final class API {
 		return encoder
 	}()
 
-//	static let jwtExpirationValidator: DataRequest.Validation = { request, response, data in
-//		if response.statusCode == 401 {
-//			return .failure(APIError.jwtExpired)
-//		}
-//		return .success
-//	}
-
 	static func createRequest(_ url: String) throws -> URLRequest {
 		guard let url = URL(string: baseUrl + url) else {
 			throw BlocksError.internalError
@@ -91,16 +84,12 @@ final class API {
 	static func process<T>(data: Data?, response: URLResponse?, error: Error?, decoder: JSONDecoder = jsonDecoder) throws -> T where T: Decodable {
 		if let data = data, let json = try? decoder.decode(T.self, from: data) {
 			return json
-//		} else if let data = response.data, let json = API.decode(ErrorResponse.self, from: data, logError: false), let error = json.errorCode {
-//			print("ERROR:", error)
-//			throw error
 		} else {
 			try throwError(response: response, error: error)
 		}
 	}
 
 	static func throwError(response: URLResponse?, error: Error?) throws -> Never {
-		print("ERROR:", response as Any, error as Any)
 		if error != nil {
 			throw BlocksError.networkError
 		} else {

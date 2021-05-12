@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol BlocksSDKDelegate: class {
+public protocol BlocksSDKDelegate: AnyObject {
 
 	func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String])
 
