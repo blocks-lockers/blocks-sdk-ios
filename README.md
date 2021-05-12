@@ -1,6 +1,6 @@
 # BlocksSDK iOS
 
-By [Blocks Lockers](https://blockslockers.com/).
+By [Blocks lockers](https://blockslockers.com/)
 
 ## Requirements
 
@@ -33,15 +33,23 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
 
 Package pick-up via Bluetooth
 ```swift
-BlocksBluetoothManager.pickupPackage(
+BlocksBluetoothManager.shared.pickupPackage(
     packageId: "cb5d5c4f-20ed-477e-a3f9-e6e5e46c82ce",
     unlockCode: "123456",
     blocksSerialNo: "2000-0001"
-) { result in
-    do {
-        try result.get()
-    } catch {
-        print("error:", error)
+) { state in
+    switch state {
+    case .connected:
+        // Connected to Blocks
+
+    case .opened:
+        // Box opened
+
+    case .finished:
+        // Box closed
+
+    case .error(let error):
+        print("Error:", error)
     }
 }
 ```
@@ -60,7 +68,7 @@ class BlocksManager {
 
 extension BlocksManager: BlocksSDKDelegate {
 
-    func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String]) {
+    func didUpdateNearbyBlocks(_ serialNumbers: [String]) {
         // ...
     }
 
@@ -69,4 +77,4 @@ extension BlocksManager: BlocksSDKDelegate {
 
 ## Author
 
-* [Blocks Lockers](https://github.com/blocks-lockers)
+* [Blocks lockers](https://github.com/blocks-lockers)

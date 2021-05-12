@@ -22,7 +22,7 @@ public final class BlocksSDK: NSObject {
 	}
 
 	/// Nearby Blocks serial numbers
-	public internal(set) var nearbyBlocksIds: [String] = []
+	public internal(set) var nearbyBlocks: [String] = []
 
 	private override init() {
 		super.init()
@@ -50,12 +50,12 @@ public final class BlocksSDK: NSObject {
 	}
 
 	public func openBox(package: BlocksPackage, completion: @escaping (Swift.Result<Void, Error>) -> Void) {
-		guard nearbyBlocksIds.contains(package.blocks.serialNo) else { return completion(.failure(BlocksError.blocksNotNearby)) }
+		guard nearbyBlocks.contains(package.blocks.serialNo) else { return completion(.failure(BlocksError.blocksNotNearby)) }
 		API.Blocks.openBox(packageId: package.id, completion: completion)
 	}
 
 	public func openNewStorage(blocksSerial: String, completion: @escaping (Swift.Result<Void, Error>) -> Void) {
-		guard nearbyBlocksIds.contains(blocksSerial) else { return completion(.failure(BlocksError.blocksNotNearby)) }
+		guard nearbyBlocks.contains(blocksSerial) else { return completion(.failure(BlocksError.blocksNotNearby)) }
 		API.Blocks.openNewStorage(blocksSerial: blocksSerial, completion: completion)
 	}
 

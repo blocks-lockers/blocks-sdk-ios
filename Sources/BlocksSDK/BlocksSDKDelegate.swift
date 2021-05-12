@@ -10,6 +10,6 @@ import Foundation
 
 public protocol BlocksSDKDelegate: AnyObject {
 
-	func didUpdateNearbyBlocksIds(_ nearbyBlockIds: [String])
+	func didUpdateNearbyBlocks(_ serialNumbers: [String])
 
 }
