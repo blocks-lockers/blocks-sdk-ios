@@ -129,6 +129,7 @@ extension BlocksBluetoothManager {
 
 				case .error:
 					self.pickupHandler?(.error(BluetoothError.pickupError))
+					self.disconnect(peripheral: peripheral)
 
 				case .waitingForClose:
 					if self.previousPickupState != .waitingForClose {

@@ -49,8 +49,26 @@ BlocksBluetoothManager.shared.pickupPackage(
         // Box closed
 
     case .error(let error):
-        print("Error:", error)
-    }
+        switch error {
+        case .blocksMismatch:
+            // Blocks serial number mismatch
+
+        case .blocksBusy:
+            // Blocks are not ready for bluetooth pairing
+
+        case .connectionError:
+            // Bluetooth connection error
+
+        case .communicationError:
+            // Bluetooth communication error
+
+        case .pickupError:
+            // Package not found or already picked up
+
+        case .internalError:
+            // Unknown error		
+        }
+    }	
 }
 ```
 
