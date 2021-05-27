@@ -31,6 +31,8 @@ public final class BlocksBluetoothManager: NSObject {
 
 	public static let shared = BlocksBluetoothManager()
 
+	public var enableDebugLog = false
+
 	private let statusCharacteristic: Characteristic
 	private let commandCharacteristic: Characteristic
 	private let service: Service
@@ -39,9 +41,9 @@ public final class BlocksBluetoothManager: NSObject {
 	private var previousPickupState: BlocksStateEnum = .ready
 	private var pickupHandler: PickupHandler?
 
-	private var decoder = JSONDecoder()
-
 	private var peripheral: Peripheral<Connectable>?
+
+	private var decoder = JSONDecoder()
 
 	private override init() {
 		// swiftlint:disable force_try
@@ -58,6 +60,11 @@ public final class BlocksBluetoothManager: NSObject {
 		BluetoothConnection.shared.stopScanning()
 	}
 
+	public func disconnect() {
+		guard let peripheral = peripheral else { return }
+		disconnect(peripheral: peripheral)
+	}
+
 }
 
 // MARK: - Scanning
@@ -65,8 +72,8 @@ public final class BlocksBluetoothManager: NSObject {
 extension BlocksBluetoothManager {
 
 	private func readState(peripheral: Peripheral<Connectable>, completion: @escaping (Result<BlocksState, Error>) -> Void) {
-		peripheral.read(self.statusCharacteristic) { data, error in
-			if let data = data, let state = try? self.decoder.decode(BlocksState.self, from: data) {
+		peripheral.read(self.statusCharacteristic) { [weak self] data, error in
+			if let data = data, let state = try? self?.decoder.decode(BlocksState.self, from: data) {
 				DispatchQueue.main.async {
 					completion(.success(state))
 				}
@@ -79,9 +86,11 @@ extension BlocksBluetoothManager {
 	}
 
 	private func checkReadyStateForPickup(peripheral: Peripheral<Connectable>, packageId: String, unlockCode: String, blocksSerialNo: String) {
+		log("[BT] checkReadyStateForPickup")
 		readState(peripheral: peripheral) { result in
 			do {
 				let state = try result.get()
+				self.log("[BT] state: \(state)")
 
 				guard state.serialNo == blocksSerialNo else {
 					throw BluetoothError.blocksMismatch
@@ -104,9 +113,12 @@ extension BlocksBluetoothManager {
 	}
 
 	private func pickupAndCheckState(peripheral: Peripheral<Connectable>, packageId: String, unlockCode: String) {
+		log("[BT] pickupAndCheckState")
 		readState(peripheral: peripheral) { result in
 			do {
 				let state = try result.get()
+
+				self.log("[BT] state: \(state)")
 
 				switch state.state {
 				case .finished:
@@ -127,6 +139,7 @@ extension BlocksBluetoothManager {
 					peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { error in
 						DispatchQueue.main.async {
 							if error != nil {
+								self.log("[BT] error: \(error as Any)")
 								self.disconnect(peripheral: peripheral)
 								self.pickupHandler?(.error(.connectionError))
 							} else {
@@ -147,7 +160,7 @@ extension BlocksBluetoothManager {
 
 	private func sendLogoutCommand(peripheral: Peripheral<Connectable>) {
 		let commandString = #"{"type":"logout"}"#
-		peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { error in
+		peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { _ in
 			DispatchQueue.main.async {
 				self.disconnect(peripheral: peripheral)
 				self.pickupHandler?(.finished)
@@ -164,14 +177,16 @@ extension BlocksBluetoothManager {
 		self.pickupHandler = handler
 
 		let peripheral = Peripheral(configuration: configuration)
+		log("[BT] peripheral: \(peripheral)")
 		self.peripheral = peripheral
 		BluetoothConnection.shared.connect(peripheral) { [weak self] error in
-			if error != nil {
-				DispatchQueue.main.async {
-					self?.pickupHandler?(.error(.connectionError))
-				}
+			guard error == nil else {
+				self?.log("[BT] error: \(error as Any)")
+				self?.pickupHandler?(.error(.connectionError))
 				return
 			}
+
+			self?.log("[BT] connected")
 
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
 				self?.checkReadyStateForPickup(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode, blocksSerialNo: blocksSerialNo)
@@ -179,8 +194,13 @@ extension BlocksBluetoothManager {
 		}
 	}
 
-	public func pickupPackage(package: BlocksPackage, handler: @escaping PickupHandler) {
-		pickupPackage(packageId: package.id, unlockCode: package.unlockCode, blocksSerialNo: package.blocks.serialNo, handler: handler)
+}
+
+extension BlocksBluetoothManager {
+
+	private func log(_ log: String) {
+		guard enableDebugLog else { return }
+		print("[BlocksSDK]", log)
 	}
 
 }
