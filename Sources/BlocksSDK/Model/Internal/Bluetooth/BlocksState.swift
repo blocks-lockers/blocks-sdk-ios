@@ -17,12 +17,9 @@ enum BlocksStateEnum: String, Codable {
 }
 
 struct BlocksState: Codable {
-
 	var version: Int
-	var startedAt: Date
 	var serialNo: String
 	var state: BlocksStateEnum
 	var error: String?
 	var packageId: String?
-
 }
