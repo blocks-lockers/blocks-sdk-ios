@@ -36,8 +36,6 @@ public final class BlocksBluetoothManager: NSObject {
 	private let service: Service
 	private let configuration: Configuration
 
-	private var peripheral: Peripheral<Connectable>?
-
 	private var previousPickupState: BlocksStateEnum = .ready
 	private var pickupHandler: PickupHandler?
 
@@ -63,14 +61,6 @@ public final class BlocksBluetoothManager: NSObject {
 // MARK: - Scanning
 
 extension BlocksBluetoothManager {
-
-	private func getPeripheral() throws -> Peripheral<Connectable> {
-		guard let peripheral = self.peripheral else {
-			BluetoothConnection.shared.stopScanning()
-			throw BluetoothError.internalError
-		}
-		return peripheral
-	}
 
 	private func readState(peripheral: Peripheral<Connectable>, completion: @escaping (Result<BlocksState, Error>) -> Void) {
 		peripheral.read(self.statusCharacteristic) { data, error in
@@ -146,8 +136,9 @@ extension BlocksBluetoothManager {
 
 				self.previousPickupState = state.state
 			} catch {
-				self.disconnect(peripheral: peripheral)
-				self.pickupHandler?(.error(.internalError))
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+					self.checkPickUpState(peripheral: peripheral)
+				}
 			}
 		}
 	}
@@ -169,7 +160,6 @@ extension BlocksBluetoothManager {
 		self.pickupHandler = handler
 
 		let peripheral = Peripheral(configuration: configuration)
-		self.peripheral = peripheral
 		BluetoothConnection.shared.connect(peripheral) { [weak self] error in
 			if error != nil {
 				self?.pickupHandler?(.error(.connectionError))
@@ -177,11 +167,6 @@ extension BlocksBluetoothManager {
 			}
 
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-				guard let peripheral = try? self?.getPeripheral() else {
-					self?.pickupHandler?(.error(.internalError))
-					return
-				}
-
 				self?.checkReadyStateForPickup(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode, blocksSerialNo: blocksSerialNo)
 			}
 		}

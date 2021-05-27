@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   
 s.name         = "BlocksSDK"
-s.version      = "0.3.1"
+s.version      = "0.3.2"
 s.summary      = "A Blocks Lockers SDK for API communication and opening doors via bluetooth"
 
 s.homepage     = "https://github.com/blocks-lockers/blocks-sdk-ios"
