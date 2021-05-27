@@ -88,7 +88,7 @@ extension BlocksBluetoothManager {
 				self.pickupHandler?(.connected)
 				self.previousPickupState = .ready
 
-				self.sendPickupCommand(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
+				self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
 			} catch {
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 					self.checkReadyStateForPickup(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode, blocksSerialNo: blocksSerialNo)
@@ -97,19 +97,7 @@ extension BlocksBluetoothManager {
 		}
 	}
 
-	private func sendPickupCommand(peripheral: Peripheral<Connectable>, packageId: String, unlockCode: String) {
-		let commandString = #"{"type":"pickup","package_id":"\#(packageId)","unlock_code":"\#(unlockCode)"}"#
-		peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { error in
-			if error != nil {
-				self.disconnect(peripheral: peripheral)
-				self.pickupHandler?(.error(.connectionError))
-			} else {
-				self.checkPickUpState(peripheral: peripheral)
-			}
-		}
-	}
-
-	private func checkPickUpState(peripheral: Peripheral<Connectable>) {
+	private func pickupAndCheckState(peripheral: Peripheral<Connectable>, packageId: String, unlockCode: String) {
 		readState(peripheral: peripheral) { result in
 			do {
 				let state = try result.get()
@@ -129,15 +117,21 @@ extension BlocksBluetoothManager {
 					fallthrough
 
 				case .ready, .unknown:
-					DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-						self.checkPickUpState(peripheral: peripheral)
+					let commandString = #"{"type":"pickup","package_id":"\#(packageId)","unlock_code":"\#(unlockCode)"}"#
+					peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { error in
+						if error != nil {
+							self.disconnect(peripheral: peripheral)
+							self.pickupHandler?(.error(.connectionError))
+						} else {
+							self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
+						}
 					}
 				}
 
 				self.previousPickupState = state.state
 			} catch {
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-					self.checkPickUpState(peripheral: peripheral)
+					self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
 				}
 			}
 		}
