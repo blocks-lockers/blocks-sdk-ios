@@ -14,7 +14,7 @@ By [Blocks lockers](https://blockslockers.com/)
 
 To install BlocksSDK, simply add the following line to your Podfile:
 
-    pod 'BlocksSDK', '~> 0.3.4'
+    pod 'BlocksSDK', '~> 0.3.5'
 
 ### Swift Package Manager
 

@@ -41,9 +41,11 @@ public final class BlocksBluetoothManager: NSObject {
 
 	private var decoder = JSONDecoder()
 
+	private var peripheral: Peripheral<Connectable>?
+
 	private override init() {
 		// swiftlint:disable force_try
-		statusCharacteristic = try! Characteristic(uuid: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a3", shouldObserveNotification: true)
+		statusCharacteristic = try! Characteristic(uuid: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a3")
 		commandCharacteristic = try! Characteristic(uuid: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a4")
 		service = try! Service(uuid: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a2", characteristics: [statusCharacteristic, commandCharacteristic])
 		configuration = try! Configuration(services: [service], advertisement: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a2")
@@ -65,9 +67,13 @@ extension BlocksBluetoothManager {
 	private func readState(peripheral: Peripheral<Connectable>, completion: @escaping (Result<BlocksState, Error>) -> Void) {
 		peripheral.read(self.statusCharacteristic) { data, error in
 			if let data = data, let state = try? self.decoder.decode(BlocksState.self, from: data) {
-				completion(.success(state))
+				DispatchQueue.main.async {
+					completion(.success(state))
+				}
 			} else {
-				completion(.failure(error ?? BluetoothError.communicationError))
+				DispatchQueue.main.async {
+					completion(.failure(error ?? BluetoothError.communicationError))
+				}
 			}
 		}
 	}
@@ -119,11 +125,13 @@ extension BlocksBluetoothManager {
 				case .ready, .unknown:
 					let commandString = #"{"type":"pickup","package_id":"\#(packageId)","unlock_code":"\#(unlockCode)"}"#
 					peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { error in
-						if error != nil {
-							self.disconnect(peripheral: peripheral)
-							self.pickupHandler?(.error(.connectionError))
-						} else {
-							self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
+						DispatchQueue.main.async {
+							if error != nil {
+								self.disconnect(peripheral: peripheral)
+								self.pickupHandler?(.error(.connectionError))
+							} else {
+								self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
+							}
 						}
 					}
 				}
@@ -140,8 +148,10 @@ extension BlocksBluetoothManager {
 	private func sendLogoutCommand(peripheral: Peripheral<Connectable>) {
 		let commandString = #"{"type":"logout"}"#
 		peripheral.write(command: .utf8String(commandString), characteristic: self.commandCharacteristic) { error in
-			self.disconnect(peripheral: peripheral)
-			self.pickupHandler?(.finished)
+			DispatchQueue.main.async {
+				self.disconnect(peripheral: peripheral)
+				self.pickupHandler?(.finished)
+			}
 		}
 	}
 
@@ -154,9 +164,12 @@ extension BlocksBluetoothManager {
 		self.pickupHandler = handler
 
 		let peripheral = Peripheral(configuration: configuration)
+		self.peripheral = peripheral
 		BluetoothConnection.shared.connect(peripheral) { [weak self] error in
 			if error != nil {
-				self?.pickupHandler?(.error(.connectionError))
+				DispatchQueue.main.async {
+					self?.pickupHandler?(.error(.connectionError))
+				}
 				return
 			}
 
