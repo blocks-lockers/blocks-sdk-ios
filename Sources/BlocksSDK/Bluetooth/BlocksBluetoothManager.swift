@@ -100,8 +100,9 @@ extension BlocksBluetoothManager {
 
 				self.sendPickupCommand(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
 			} catch {
-				self.disconnect(peripheral: peripheral)
-				self.pickupHandler?(.error(.internalError))
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+					self.checkReadyStateForPickup(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode, blocksSerialNo: blocksSerialNo)
+				}
 			}
 		}
 	}
