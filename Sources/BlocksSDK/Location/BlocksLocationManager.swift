@@ -77,8 +77,7 @@ extension BlocksLocationManager: CLLocationManagerDelegate {
 	}
 
 	public func locationManager(_ manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], in region: CLBeaconRegion) {
-		let nearbyBeacons = beacons.filter({ $0.proximity == .immediate || $0.proximity == .near })
-		let nearbyBlocks = nearbyBeacons.map { String(format: "%04d-%04d", $0.major.intValue, $0.minor.intValue) }
+		let nearbyBlocks = beacons.map { String(format: "%04d-%04d", $0.major.intValue, $0.minor.intValue) }
 		BlocksSDK.shared.nearbyBlocks = nearbyBlocks
 		BlocksSDK.shared.delegate?.didUpdateNearbyBlocks(nearbyBlocks)
 	}

@@ -93,7 +93,8 @@ extension BlocksBluetoothManager {
 				self.log("[BT] state: \(state)")
 
 				guard state.serialNo == blocksSerialNo else {
-					throw BluetoothError.blocksMismatch
+					self.pickupHandler?(.error(.blocksMismatch))
+					return
 				}
 
 				guard state.state == .ready else {
@@ -105,6 +106,7 @@ extension BlocksBluetoothManager {
 
 				self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
 			} catch {
+				self.log("[BT] error: \(error)")
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 					self.checkReadyStateForPickup(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode, blocksSerialNo: blocksSerialNo)
 				}
@@ -151,6 +153,7 @@ extension BlocksBluetoothManager {
 
 				self.previousPickupState = state.state
 			} catch {
+				self.log("[BT] error: \(error)")
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 					self.pickupAndCheckState(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode)
 				}
