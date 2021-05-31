@@ -87,7 +87,10 @@ extension BlocksBluetoothManager {
 
 	private func checkReadyStateForPickup(peripheral: Peripheral<Connectable>, packageId: String, unlockCode: String, blocksSerialNo: String) {
 		log("[BT] checkReadyStateForPickup")
+		var finished = false
 		readState(peripheral: peripheral) { result in
+			guard !finished else { return }
+			finished = true
 			do {
 				let state = try result.get()
 				self.log("[BT] state: \(state)")
@@ -112,11 +115,19 @@ extension BlocksBluetoothManager {
 				}
 			}
 		}
+		DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+			guard !finished else { return }
+			finished = true
+			self.pickupHandler?(.error(.communicationError))
+		}
 	}
 
 	private func pickupAndCheckState(peripheral: Peripheral<Connectable>, packageId: String, unlockCode: String) {
 		log("[BT] pickupAndCheckState")
+		var finished = false
 		readState(peripheral: peripheral) { result in
+			guard !finished else { return }
+			finished = true
 			do {
 				let state = try result.get()
 
@@ -159,6 +170,11 @@ extension BlocksBluetoothManager {
 				}
 			}
 		}
+		DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+			guard !finished else { return }
+			finished = true
+			self.pickupHandler?(.error(.communicationError))
+		}
 	}
 
 	private func sendLogoutCommand(peripheral: Peripheral<Connectable>) {
@@ -182,7 +198,11 @@ extension BlocksBluetoothManager {
 		let peripheral = Peripheral(configuration: configuration)
 		log("[BT] peripheral: \(peripheral)")
 		self.peripheral = peripheral
+		var finished = false
 		BluetoothConnection.shared.connect(peripheral) { [weak self] error in
+			guard !finished else { return }
+			finished = true
+
 			guard error == nil else {
 				self?.log("[BT] error: \(error as Any)")
 				self?.pickupHandler?(.error(.connectionError))
@@ -194,6 +214,14 @@ extension BlocksBluetoothManager {
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
 				self?.checkReadyStateForPickup(peripheral: peripheral, packageId: packageId, unlockCode: unlockCode, blocksSerialNo: blocksSerialNo)
 			}
+		}
+
+		DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+			guard !finished else { return }
+			finished = true
+			self?.log("[BT] timed out")
+			self?.peripheral = nil
+			self?.pickupHandler?(.error(.connectionError))
 		}
 	}
 
