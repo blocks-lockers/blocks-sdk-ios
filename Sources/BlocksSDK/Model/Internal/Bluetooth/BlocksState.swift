@@ -11,7 +11,7 @@ import Foundation
 enum BlocksStateEnum: String, Codable {
 	case unknown
 	case ready
-	case waitingForClose = "waiting_for_close"
+	case opening
 	case finished
 	case error
 }

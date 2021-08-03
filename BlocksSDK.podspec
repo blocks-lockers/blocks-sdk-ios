@@ -15,6 +15,5 @@ s.source        = { :git => "https://github.com/blocks-lockers/blocks-sdk-ios.gi
 s.source_files  = "Sources/**/*.{h,m,swift}"
 
 s.dependency 'Alamofire', '5.4.0'
-s.dependency 'BlueSwift', '1.0.5'
 
 end

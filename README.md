@@ -14,7 +14,7 @@ By [Blocks lockers](https://blockslockers.com/)
 
 To install BlocksSDK, simply add the following line to your Podfile:
 
-    pod 'BlocksSDK', '~> 0.4.0'
+    pod 'BlocksSDK', '~> 1.0.0'
 
 ### Swift Package Manager
 
@@ -48,31 +48,31 @@ BlocksBluetoothManager.shared.pickupPackage(
     case .connected:
         // Connected to Blocks
 
-    case .opened:
-        // Box opened
-
     case .finished:
-        // Box closed
+        // Box opened
 
     case .error(let error):
         switch error {
-        case .blocksMismatch:
-            // Blocks serial number mismatch
-
-        case .blocksBusy:
-            // Blocks are not ready for bluetooth pairing
-
-        case .connectionError:
-            // Bluetooth connection error
-
-        case .communicationError:
-            // Bluetooth communication error
-
-        case .pickupError:
-            // Package not found or already picked up
-
-        case .internalError:
-            // Unknown error		
+		case operationInProgress:
+			// Another operation is already in progress
+			
+		case bleNotReady:
+			// BLE is not ready (no authorization or not powered on)
+		
+		case blocksNotFound:
+			// Blocks not found nearby
+		
+		case connectionError:
+			// Blocks found, but connection failed
+		
+		case packageNotFound:
+			// Package not found in Blocks
+		
+		case boxNotOpened:
+			// Box did not open
+		
+		case internalError:
+			// Unknown error
         }
     }	
 }
