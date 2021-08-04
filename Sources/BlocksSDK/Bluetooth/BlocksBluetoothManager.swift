@@ -53,6 +53,7 @@ public final class BlocksBluetoothManager: NSObject {
 
 	private var statusCharacteristic: CBCharacteristic?
 	private var commandCharacteristic: CBCharacteristic?
+	private var timeoutTimer: Timer?
 
 	private var previousPickupState: BlocksStateEnum = .ready
 	private var pickupHandler: PickupHandler?
@@ -95,7 +96,7 @@ extension BlocksBluetoothManager {
 
 		centralManager.scanForPeripherals(withServices: [serviceUuid])
 
-		Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
+		timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
 			if self.peripheral == nil {
 				self.log("Scan timeout")
 				self.centralManager.stopScan()
@@ -136,6 +137,8 @@ extension BlocksBluetoothManager: CBCentralManagerDelegate {
 
 	public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
 		log("Disconnected")
+		self.timeoutTimer?.invalidate()
+		self.timeoutTimer = nil
 		self.peripheral = nil
 		self.statusCharacteristic = nil
 		self.commandCharacteristic = nil
