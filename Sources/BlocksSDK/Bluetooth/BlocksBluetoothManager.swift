@@ -35,6 +35,11 @@ public final class BlocksBluetoothManager: NSObject {
 		case finished
 		case error(BluetoothError)
 	}
+    
+    public enum Command {
+        case pickup(packageId: String, unlockCode: String)
+        case phoneStorage(phone: String, boxType: String)
+    }
 
 	public static let shared = BlocksBluetoothManager()
 
@@ -47,9 +52,7 @@ public final class BlocksBluetoothManager: NSObject {
 	private let statusCharacteristicUuid = CBUUID(string: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a3")
 	private let commandCharacteristicUuid = CBUUID(string: "aa2fbfff-4f1c-4855-a626-5f4b7bba09a4")
 
-	private var packageId: String?
-	private var unlockCode: String?
-	private var blocksSerialNo: String?
+    private var command: Command?
 
 	private var statusCharacteristic: CBCharacteristic?
 	private var commandCharacteristic: CBCharacteristic?
@@ -79,8 +82,8 @@ public final class BlocksBluetoothManager: NSObject {
 
 extension BlocksBluetoothManager {
 
-	public func pickupPackage(packageId: String, unlockCode: String, blocksSerialNo: String, handler: @escaping PickupHandler) {
-		guard self.packageId == nil else {
+	public func pickupPackage(packageId: String, unlockCode: String, handler: @escaping PickupHandler) {
+		guard self.command == nil else {
 			handler(.error(.operationInProgress))
 			return
 		}
@@ -91,8 +94,7 @@ extension BlocksBluetoothManager {
 		}
 
 		self.pickupHandler = handler
-		self.packageId = packageId
-		self.unlockCode = unlockCode
+        self.command = Command.pickup(packageId: packageId, unlockCode: unlockCode)
 
 		centralManager.scanForPeripherals(withServices: [serviceUuid])
 
@@ -101,8 +103,7 @@ extension BlocksBluetoothManager {
 				self.log("Scan timeout")
 				self.centralManager.stopScan()
 				self.pickupHandler?(.error(.blocksNotFound))
-				self.packageId = nil
-				self.unlockCode = nil
+                self.command = nil
 			} else if self.statusCharacteristic == nil {
 				self.log("Connection timeout")
 				self.pickupHandler?(.error(.connectionError))
@@ -110,6 +111,36 @@ extension BlocksBluetoothManager {
 			}
 		}
 	}
+    
+    public func phoneStorage(phone: String, boxType: String, handler: @escaping PickupHandler) {
+        guard self.command == nil else {
+            handler(.error(.operationInProgress))
+            return
+        }
+
+        guard centralManager.state == .poweredOn else {
+            handler(.error(.bleNotReady))
+            return
+        }
+
+        self.pickupHandler = handler
+        self.command = Command.phoneStorage(phone: phone, boxType: boxType)
+
+        centralManager.scanForPeripherals(withServices: [serviceUuid])
+
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
+            if self.peripheral == nil {
+                self.log("Scan timeout")
+                self.centralManager.stopScan()
+                self.pickupHandler?(.error(.blocksNotFound))
+                self.command = nil
+            } else if self.statusCharacteristic == nil {
+                self.log("Connection timeout")
+                self.pickupHandler?(.error(.connectionError))
+                self.disconnect()
+            }
+        }
+    }
 
 }
 
@@ -142,8 +173,7 @@ extension BlocksBluetoothManager: CBCentralManagerDelegate {
 		self.peripheral = nil
 		self.statusCharacteristic = nil
 		self.commandCharacteristic = nil
-		self.packageId = nil
-		self.unlockCode = nil
+        self.command = nil
 	}
 
 }
@@ -193,10 +223,19 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
 				self.pickupHandler?(.error(.internalError))
 				return
 			}
-
-			let str = #"{"type":"pickup","packageId":"\#(packageId ?? "")","unlock_code":"\#(unlockCode ?? "")"}"#
-			peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
-
+            
+            guard let command = command else {
+                return
+            }
+            
+            switch command {
+            case .pickup(let packageId, let unlockCode):
+                let str = #"{"type":"pickup","packageId":"\#(packageId)","unlock_code":"\#(unlockCode)"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .phoneStorage(let phone, let boxType):
+                let str = #"{"type":"phone_storage","phone":"\#(phone)","boxType":"\#(boxType)"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            }
 		case .unknown, .opening:
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 				peripheral.readValue(for: characteristic)
