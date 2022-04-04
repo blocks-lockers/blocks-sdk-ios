@@ -33,12 +33,15 @@ public final class BlocksBluetoothManager: NSObject {
 	public enum PickupState {
 		case connected
 		case finished
+        case opened
 		case error(BluetoothError)
 	}
     
     public enum Command {
         case pickup(packageId: String, unlockCode: String)
         case phoneStorage(phone: String, boxType: String)
+        case addressbookStorage(personId: String, boxType: String)
+        case reservationStorage(personId: String, boxType: String)
     }
 
 	public static let shared = BlocksBluetoothManager()
@@ -235,12 +238,24 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
             case .phoneStorage(let phone, let boxType):
                 let str = #"{"type":"phone_storage","phone":"\#(phone)","boxType":"\#(boxType)"}"#
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .addressbookStorage(let personId, let boxType):
+                let str = #"{"type":"addressbook_storage","personId":"\#(personId)","boxType":"\#(boxType)"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .reservationStorage(let personId, let boxType):
+                let str = #"{"type":"reservation_storage","personId":"\#(personId)","boxType":"\#(boxType)"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
             }
 		case .unknown, .opening:
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 				peripheral.readValue(for: characteristic)
 			}
-
+            
+        case .opened:
+            self.pickupHandler?(.opened)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                peripheral.readValue(for: characteristic)
+            }
+            
 		case .finished:
 			self.pickupHandler?(.finished)
 			self.disconnect()

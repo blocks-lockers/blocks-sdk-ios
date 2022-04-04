@@ -12,6 +12,7 @@ enum BlocksStateEnum: String, Codable {
 	case unknown
 	case ready
 	case opening
+    case opened
 	case finished
 	case error
 }
