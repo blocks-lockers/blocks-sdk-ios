@@ -42,6 +42,7 @@ public final class BlocksBluetoothManager: NSObject {
         case phoneStorage(phone: String, boxType: String)
         case addressbookStorage(personId: String, boxType: String)
         case reservationStorage(personId: String, boxType: String)
+        case changeBoxSize
     }
 
 	public static let shared = BlocksBluetoothManager()
@@ -86,65 +87,17 @@ public final class BlocksBluetoothManager: NSObject {
 extension BlocksBluetoothManager {
 
 	public func pickupPackage(packageId: String, unlockCode: String, handler: @escaping PickupHandler) {
-		guard self.command == nil else {
-			handler(.error(.operationInProgress))
-			return
-		}
-
-		guard centralManager.state == .poweredOn else {
-			handler(.error(.bleNotReady))
-			return
-		}
-
-		self.pickupHandler = handler
-        self.command = Command.pickup(packageId: packageId, unlockCode: unlockCode)
-
-		centralManager.scanForPeripherals(withServices: [serviceUuid])
-
-		timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
-			if self.peripheral == nil {
-				self.log("Scan timeout")
-				self.centralManager.stopScan()
-				self.pickupHandler?(.error(.blocksNotFound))
-                self.command = nil
-			} else if self.statusCharacteristic == nil {
-				self.log("Connection timeout")
-				self.pickupHandler?(.error(.connectionError))
-				self.disconnect()
-			}
-		}
+        sendCommand(.pickup(packageId: packageId, unlockCode: unlockCode), handler: handler)
 	}
     
     public func phoneStorage(phone: String, boxType: String, handler: @escaping PickupHandler) {
-        guard self.command == nil else {
-            handler(.error(.operationInProgress))
-            return
-        }
-
-        guard centralManager.state == .poweredOn else {
-            handler(.error(.bleNotReady))
-            return
-        }
-
-        self.pickupHandler = handler
-        self.command = Command.phoneStorage(phone: phone, boxType: boxType)
-
-        centralManager.scanForPeripherals(withServices: [serviceUuid])
-
-        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
-            if self.peripheral == nil {
-                self.log("Scan timeout")
-                self.centralManager.stopScan()
-                self.pickupHandler?(.error(.blocksNotFound))
-                self.command = nil
-            } else if self.statusCharacteristic == nil {
-                self.log("Connection timeout")
-                self.pickupHandler?(.error(.connectionError))
-                self.disconnect()
-            }
-        }
+        sendCommand(.phoneStorage(phone: phone, boxType: boxType), handler: handler)
     }
-
+    
+    
+    public func changeBoxSize(handler: @escaping PickupHandler) {
+        sendCommand(.changeBoxSize, handler: handler)
+    }
 }
 
 // MARK: - CBCentralManagerDelegate
@@ -244,6 +197,9 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
             case .reservationStorage(let personId, let boxType):
                 let str = #"{"type":"reservation_storage","personId":"\#(personId)","boxType":"\#(boxType)"}"#
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .changeBoxSize:
+                let str = #"{"type":"change_box_size"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
             }
 		case .unknown, .opening:
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -296,4 +252,41 @@ extension BlocksBluetoothManager {
 		print("[BlocksSDK]", log)
 	}
 
+}
+
+
+// MARK: - Private methods
+
+private extension BlocksBluetoothManager {
+    
+    func sendCommand(_ command: Command, handler: @escaping PickupHandler) {
+        guard self.command == nil else {
+            handler(.error(.operationInProgress))
+            return
+        }
+
+        guard centralManager.state == .poweredOn else {
+            handler(.error(.bleNotReady))
+            return
+        }
+
+        self.pickupHandler = handler
+        self.command = command
+
+        centralManager.scanForPeripherals(withServices: [serviceUuid])
+
+        timeoutTimer?.invalidate()
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
+            if self.peripheral == nil {
+                self.log("Scan timeout")
+                self.centralManager.stopScan()
+                self.pickupHandler?(.error(.blocksNotFound))
+                self.command = nil
+            } else if self.statusCharacteristic == nil {
+                self.log("Connection timeout")
+                self.pickupHandler?(.error(.connectionError))
+                self.disconnect()
+            }
+        }
+    }
 }
