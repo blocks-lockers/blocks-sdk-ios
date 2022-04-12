@@ -43,6 +43,7 @@ public final class BlocksBluetoothManager: NSObject {
         case addressbookStorage(personId: String, boxType: String)
         case reservationStorage(personId: String, boxType: String)
         case changeBoxSize
+        case checkClosedBox(boxId: String)
     }
 
 	public static let shared = BlocksBluetoothManager()
@@ -94,9 +95,12 @@ extension BlocksBluetoothManager {
         sendCommand(.phoneStorage(phone: phone, boxType: boxType), handler: handler)
     }
     
-    
     public func changeBoxSize(handler: @escaping PickupHandler) {
         sendCommand(.changeBoxSize, handler: handler)
+    }
+    
+    public func checkClosedBox(boxId: String, handler: @escaping PickupHandler) {
+        sendCommand(.checkClosedBox(boxId: boxId), handler: handler)
     }
 }
 
@@ -199,6 +203,9 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
             case .changeBoxSize:
                 let str = #"{"type":"change_box_size"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .checkClosedBox(let boxId):
+                let str = #"{"type":"check_closed_box","boxId":"\#(boxId)"}"#
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
             }
 		case .unknown, .opening:
