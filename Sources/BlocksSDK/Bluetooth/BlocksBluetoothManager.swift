@@ -33,7 +33,7 @@ public final class BlocksBluetoothManager: NSObject {
 	public enum PickupState {
 		case connected
 		case finished
-        case opened
+        case opened(boxId: String?)
 		case error(BluetoothError)
 	}
     
@@ -64,6 +64,7 @@ public final class BlocksBluetoothManager: NSObject {
 	private var timeoutTimer: Timer?
 
 	private var previousPickupState: BlocksStateEnum = .ready
+    private var disconnectHandler: (() -> Void)?
 	private var pickupHandler: PickupHandler?
 
 	private let jsonDecoder = JSONDecoder()
@@ -96,7 +97,14 @@ extension BlocksBluetoothManager {
     }
     
     public func changeBoxSize(handler: @escaping PickupHandler) {
-        sendCommand(.changeBoxSize, handler: handler)
+        if command != nil {
+            disconnectHandler = { [weak self] in
+                self?.sendCommand(.changeBoxSize, handler: handler)
+            }
+            disconnect()
+        } else {
+            sendCommand(.changeBoxSize, handler: handler)
+        }
     }
     
     public func checkClosedBox(boxId: String, handler: @escaping PickupHandler) {
@@ -134,6 +142,8 @@ extension BlocksBluetoothManager: CBCentralManagerDelegate {
 		self.statusCharacteristic = nil
 		self.commandCharacteristic = nil
         self.command = nil
+        self.disconnectHandler?()
+        self.disconnectHandler = nil
 	}
 
 }
@@ -214,7 +224,7 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
 			}
             
         case .opened:
-            self.pickupHandler?(.opened)
+            self.pickupHandler?(.opened(boxId: state.openedBoxId))
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 peripheral.readValue(for: characteristic)
             }

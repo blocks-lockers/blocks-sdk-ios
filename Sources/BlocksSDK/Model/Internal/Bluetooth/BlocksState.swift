@@ -22,5 +22,6 @@ struct BlocksState: Codable {
 	var serialNo: String
 	var state: BlocksStateEnum
 	var error: String?
+    var openedBoxId: String?
 	var packageId: String?
 }
