@@ -40,6 +40,7 @@ public final class BlocksBluetoothManager: NSObject {
     public enum Command {
         case pickup(packageId: String, unlockCode: String)
         case phoneStorage(phone: String, boxType: String)
+        case selfStorage(personId: String, boxType: String)
         case addressbookStorage(personId: String, boxType: String)
         case reservationStorage(personId: String, boxType: String)
         case changeBoxSize
@@ -94,6 +95,10 @@ extension BlocksBluetoothManager {
     
     public func phoneStorage(phone: String, boxType: String, handler: @escaping PickupHandler) {
         sendCommand(.phoneStorage(phone: phone, boxType: boxType), handler: handler)
+    }
+    
+    public func selfStorage(personId: String, boxType: String, handler: @escaping PickupHandler) {
+        sendCommand(.selfStorage(personId: personId, boxType: boxType), handler: handler)
     }
     
     public func changeBoxSize(handler: @escaping PickupHandler) {
@@ -216,6 +221,9 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
             case .checkClosedBox(let boxId):
                 let str = #"{"type":"check_closed_box","boxId":"\#(boxId)"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .selfStorage(let personId, let boxType):
+                let str = #"{"type":"self_storage","personId":"\#(personId)","boxType":"\#(boxType)"}"#
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
             }
 		case .unknown, .opening:
