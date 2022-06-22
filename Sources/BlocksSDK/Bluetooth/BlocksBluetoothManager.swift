@@ -45,6 +45,7 @@ public final class BlocksBluetoothManager: NSObject {
         case reservationStorage(personId: String, boxType: String)
         case changeBoxSize
         case checkClosedBox(boxId: String)
+        case unlockPostcube
     }
 
 	public static let shared = BlocksBluetoothManager()
@@ -114,6 +115,10 @@ extension BlocksBluetoothManager {
     
     public func checkClosedBox(boxId: String, handler: @escaping PickupHandler) {
         sendCommand(.checkClosedBox(boxId: boxId), handler: handler)
+    }
+    
+    public func unlockPostcube(handler: @escaping PickupHandler) {
+        sendCommand(.unlockPostcube, handler: handler)
     }
 }
 
@@ -225,6 +230,14 @@ extension BlocksBluetoothManager: CBPeripheralDelegate {
             case .selfStorage(let personId, let boxType):
                 let str = #"{"type":"self_storage","personId":"\#(personId)","boxType":"\#(boxType)"}"#
                 peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+            case .unlockPostcube:
+                let str = #"{"type":"unlock_postcube"}"#
+                peripheral.writeValue(str.data(using: .utf8)!, for: characteristic, type: .withResponse)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.pickupHandler?(.finished)
+                    self.disconnect()
+                }
             }
 		case .unknown, .opening:
 			DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
